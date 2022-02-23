@@ -336,26 +336,26 @@ class AccountInvoice(models.Model):
     #     for inv in self:
     #         inv.is_exterior = True if inv.journal_id.purchase_type == \
     #             'exterior' else False
-    @api.depends('journal_id.l10n_latam_use_documents')
+    @api.depends('l10n_do_expense_type')
     def _compute_is_exterior(self):
         for inv in self:
             inv.is_exterior = True if inv.partner_id.l10n_do_dgii_tax_payer_type == 'foreigner' else False
     #MERPLUS 202109 --<
 
-    @api.onchange('service_type')
+    @api.onchange('l10n_do_expense_type')
     def onchange_service_type(self):
         self.service_type_detail = False
         return {
             'domain': {
                 'service_type_detail': [
-                    ('parent_code', '=', self.service_type)
+                    ('parent_code', '=', self.l10n_do_expense_type)
                     ]
             }
         }
 
     @api.onchange('journal_id')
     def ext_onchange_journal_id(self):
-        self.service_type = False
+        # self.service_type = False
         self.service_type_detail = False
 
     # ISR Percibido       --> Este campo se va con 12 espacios en 0 para el 606
@@ -418,14 +418,14 @@ class AccountInvoice(models.Model):
         store=True,
         currency_field='company_currency_id')
     is_exterior = fields.Boolean(compute='_compute_is_exterior')
-    service_type = fields.Selection([
-        ('01', 'Gastos de Personal'),
-        ('02', 'Gastos por Trabajos, Suministros y Servicios'),
-        ('03', 'Arrendamientos'), ('04', 'Gastos de Activos Fijos'),
-        ('05', 'Gastos de Representación'), ('06', 'Gastos Financieros'),
-        ('07', 'Gastos de Seguros'),
-        ('08', 'Gastos por Regalías y otros Intangibles')
-    ])
+    # service_type = fields.Selection([
+    #     ('01', 'Gastos de Personal'),
+    #     ('02', 'Gastos por Trabajos, Suministros y Servicios'),
+    #     ('03', 'Arrendamientos'), ('04', 'Gastos de Activos Fijos'),
+    #     ('05', 'Gastos de Representación'), ('06', 'Gastos Financieros'),
+    #     ('07', 'Gastos de Seguros'),
+    #     ('08', 'Gastos por Regalías y otros Intangibles')
+    # ])
     service_type_detail = fields.Many2one('invoice.service.type.detail')
     fiscal_status = fields.Selection(
         [('normal', 'Partial'), ('done', 'Reported'), ('blocked', 'Not Sent')],

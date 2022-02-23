@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
     <record id="dgii_report_form_view" model="ir.ui.view">
         <field name="name">dgii.reports.form.view</field>
         <field name="model">dgii.reports</field>
@@ -20,7 +19,7 @@
                         <group>
                             <div class="oe_title">
                                 <h1>
-                                    <field name="company_id" readonly="1"/>
+                                    <field name="company_id" readonly="0"/>
                                 </h1>
                             </div>
                         </group>
@@ -201,6 +200,7 @@
                 <field name="create_uid"/>
                 <field name="write_date"/>
                 <field name="write_uid"/>
+                <field name="company_id"/>
             </tree>
         </field>
     </record>
@@ -216,7 +216,7 @@
     </record>
 
     <record id="dgii_report_action" model="ir.actions.act_window">
-        <field name="name">Reports</field>
+        <field name="name">Data Sending</field>
         <field name="res_model">dgii.reports</field>
         <!--<field name="view_type">form</field>-->
         <field name="view_mode">tree,form</field>
@@ -226,19 +226,6 @@
             <p>You can create your DGII Tax Statements here.</p>
         </field>
     </record>
-
-    <menuitem id="marcos_account_dgii_menu" name="DGII"
-              parent="account_accountant.menu_accounting"
-              sequence="5"
-              groups="account.group_account_user"/>
-
-    <menuitem id="dgii_report_parent_menu" name="Data Sending"
-              parent="marcos_account_dgii_menu"
-              sequence="5"/>
-
-    <menuitem action="dgii_report_action" id="dgii_report_menu"
-              parent="dgii_report_parent_menu"
-              sequence="14"/>
 
     <!--606-->
     <record id="dgii_report_purchase_line_tree" model="ir.ui.view">

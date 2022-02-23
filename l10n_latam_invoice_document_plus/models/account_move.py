@@ -142,8 +142,12 @@ class AccountMove(models.Model):
 
     def _get_l10n_latam_documents_domain(self):
         self.ensure_one()
-        if self.move_type in ['out_refund', 'in_refund']:
+        if self.move_type in ['out_refund']:
             internal_types = ['credit_note']
+        elif self.move_type in ['in_refund']:
+            internal_types = ['in_credit_note']
+        elif self.move_type in ['in_invoice']:
+            internal_types = ['in_invoice','invoice']
         else:
             internal_types = ['invoice', 'debit_note']
         return [('internal_type', 'in', internal_types), ('country_id', '=', self.company_id.country_id.id)]

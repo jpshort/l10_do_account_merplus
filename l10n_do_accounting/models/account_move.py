@@ -287,7 +287,8 @@ class AccountMove(models.Model):
     def _inverse_l10n_latam_document_number(self):
         for rec in self.filtered("l10n_latam_document_type_id"):
             if not rec.l10n_latam_document_number:
-                rec.ref = "/"
+                if rec.l10n_latam_use_documents:
+                    rec.ref = "/"
             else:
                 document_type_id = rec.l10n_latam_document_type_id
                 if document_type_id.l10n_do_ncf_type:
@@ -438,7 +439,8 @@ class AccountMove(models.Model):
             lambda inv: inv.l10n_latam_country_code == "DO"
             and inv.l10n_latam_use_documents
             and inv.is_purchase_document()
-            and inv.l10n_latam_document_number
+            and inv.l10n_latam_document_number != '/'
+            and inv.state != 'draft'
         )
 
         for rec in l10n_do_invoice:
@@ -448,12 +450,14 @@ class AccountMove(models.Model):
                 ("company_id", "=", rec.company_id.id),
                 ("id", "!=", rec.id),
                 ("commercial_partner_id", "=", rec.commercial_partner_id.id),
+                ("l10n_latam_use_documents","=",True),
+                ("state","!=","draft")
             ]
             if rec.search(domain):
                 raise ValidationError(
                     _("Vendor bill NCF must be unique per vendor and company.")
                 )
-        return super(AccountMove, self - l10n_do_invoice)._check_unique_vendor_number()
+        # return super(AccountMove, self - l10n_do_invoice)._check_unique_vendor_number()
 
     def post(self):
         res = super(AccountMove, self).post()
@@ -494,7 +498,8 @@ class AccountMove(models.Model):
         super(AccountMove, self)._compute_name()
         for rec in self:
             if not rec.ref:
-                rec.ref = '/'
+                if rec.l10n_latam_use_documents:
+                    rec.ref = '/'
             document_type_id = rec.l10n_latam_document_type_id
             if document_type_id.l10n_do_ncf_type and rec.posted_before:
                 if rec.ref == '/':

@@ -40,7 +40,7 @@ class AccountJournal(models.Model):
                 invoice
                 and not self.company_id.l10n_do_ecf_issuer
                 and invoice.partner_id.l10n_do_dgii_tax_payer_type
-                and invoice.partner_id.l10n_do_dgii_tax_payer_type != "non_payer"
+                and invoice.partner_id.l10n_do_dgii_tax_payer_type not in ("non_payer")
             )
         ):
             types_list.extend(
@@ -61,7 +61,8 @@ class AccountJournal(models.Model):
             },
             "received": {
                 "taxpayer": ["fiscal", "special", "governmental"],
-                "non_payer": ["informal", "minor"],
+                "non_payer": ["informal"],
+                "minor": ["minor"],
                 "nonprofit": ["special", "governmental"],
                 "special": ["fiscal", "special", "governmental"],
                 "governmental": ["fiscal", "special", "governmental"],

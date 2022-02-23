@@ -18,7 +18,6 @@ except ImportError:
           "country codes. Please install pycountry on your system. "
           "(See requirements file)"))
 
-
 class DgiiReportSaleSummary(models.Model):
     _name = 'dgii.reports.sale.summary'
     _description = "DGII Report Sale Summary"
@@ -41,7 +40,6 @@ class DgiiReport(models.Model):
     _description = "DGII Report"
     _inherit = ['mail.thread']
 
-    
     def _compute_previous_report_pending(self):
         for report in self:
             previous = self.search([('company_id', '=', report.company_id.id),
@@ -71,10 +69,13 @@ class DgiiReport(models.Model):
         string='Currency',
         required=True,
         default=lambda self: self.env.user.company_id.currency_id)
-    company_id = fields.Many2one('res.company',
-                                 'Company',
-                                 default=lambda self: self.env.user.company_id,
-                                 required=True)
+    # company_id = fields.Many2one('res.company',
+    #                              'Company',
+    #                              default=lambda self: self.env.user.company_id.id,
+    #                              required=True)
+    company_id = fields.Many2one('res.company', string='Company', 
+                                  required=True,
+                                  default=lambda self: self.env.company)
     previous_report_pending = fields.Boolean(
         compute='_compute_previous_report_pending')
 
@@ -120,18 +121,15 @@ class DgiiReport(models.Model):
             rec.purchase_records = abs(data['purchase_records'])
             rec.service_total_amount = abs(data['service_total_amount'])
             rec.good_total_amount = abs(data['good_total_amount'])
-            rec.purchase_invoiced_amount = abs(
-                data['purchase_invoiced_amount'])
+            rec.purchase_invoiced_amount = abs(data['purchase_invoiced_amount'])
             rec.purchase_invoiced_itbis = abs(data['purchase_invoiced_itbis'])
-            rec.purchase_withholded_itbis = abs(
-                data['purchase_withholded_itbis'])
+            rec.purchase_withholded_itbis = abs(data['purchase_withholded_itbis'])
             rec.cost_itbis = abs(data['cost_itbis'])
             rec.advance_itbis = abs(data['advance_itbis'])
             rec.income_withholding = abs(data['income_withholding'])
             rec.purchase_selective_tax = abs(data['purchase_selective_tax'])
             rec.purchase_other_taxes = abs(data['purchase_other_taxes'])
             rec.purchase_legal_tip = abs(data['purchase_legal_tip'])
-
     
     def _compute_607_fields(self):
         for rec in self:
@@ -475,19 +473,18 @@ class DgiiReport(models.Model):
         for rec in self:
             PurchaseLine = self.env['dgii.reports.purchase.line']
             PurchaseLine.search([('dgii_report_id', '=', rec.id)]).unlink()
-
-            invoice_ids = self._get_invoices(['posted'],
-                                             ['in_invoice', 'in_refund'])
-
+            invoice_ids = self._get_invoices(['posted'], ['in_invoice', 'in_refund']).filtered(lambda inv: (inv.is_exterior != True))
             line = 0
             report_data = ''
             for inv in invoice_ids:
                 inv.fiscal_status = 'blocked' if not inv.fiscal_status else \
                     inv.fiscal_status
                 line += 1
+                # si es un gasto menor toma en rnc de la compañía
                 rnc_ced = self.formated_rnc_cedula(
                     inv.partner_id.vat
-                ) 
+                ) if inv.l10n_latam_document_type_id.doc_code_prefix not in ('B13','E43') \
+                    else self.formated_rnc_cedula(inv.company_id.vat)
                 show_payment_date = self._include_in_current_report(inv)
                 values = {
                     'dgii_report_id': rec.id,
@@ -1002,7 +999,7 @@ class DgiiReport(models.Model):
 
             invoice_ids = self._get_invoices(['posted'], [
                 'in_invoice', 'in_refund'
-            ]).filtered(lambda inv: (inv.partner_id.country_id.code != 'DO'))
+            ]).filtered(lambda inv: (inv.is_exterior == True))
             line = 0
             report_data = ''
             for inv in invoice_ids:
@@ -1018,7 +1015,7 @@ class DgiiReport(models.Model):
                         if inv.partner_id.company_type == 'individual' else 2,
                     'tax_id': inv.partner_id.vat,
                     'country_code': self._get_country_number(inv.partner_id),
-                    'purchased_service_type': int(inv.service_type),
+                    'purchased_service_type': int(inv.l10n_do_expense_type),
                     'service_type_detail': inv.service_type_detail.code,
                     'related_part': int(inv.partner_id.related),
                     'doc_number': inv.l10n_latam_document_number,

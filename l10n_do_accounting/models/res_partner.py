@@ -11,6 +11,7 @@ class Partner(models.Model):
         return [
             ("taxpayer", _("Fiscal Tax Payer")),
             ("non_payer", _("Non Tax Payer")),
+            ("minor", _("Minor expenses")),
             ("nonprofit", _("Nonprofit Organization")),
             ("special", _("special from Tax Paying")),
             ("governmental", _("Governmental")),
